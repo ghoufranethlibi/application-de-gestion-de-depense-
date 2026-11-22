@@ -16,14 +16,27 @@ Prérequis : Java 17 ou plus récent et Maven 3.6.3 ou plus récent.
 
 4. Ouvrir <http://localhost:8080>.
 
-Le compte administrateur local initial est `admin@budget.local` avec le mot de passe `Admin123!`. Les nouveaux membres peuvent créer leur compte depuis la page de connexion.
+### Profils et compte administrateur
 
-Pour remplacer les identifiants administrateur avant le premier démarrage :
+| Profil | Quand | Mot de passe administrateur |
+| --- | --- | --- |
+| `dev` | par défaut (`mvn spring-boot:run`) | `admin@budget.local` / `Admin123!` (démo locale uniquement) |
+| `prod` | `SPRING_PROFILES_ACTIVE=prod` | **obligatoire** via `APP_ADMIN_PASSWORD`, sinon l’application refuse de démarrer |
+| `test` | tests automatiques | base H2 en mémoire |
+
+Le mot de passe n’est plus affiché sur la page de connexion. Pour choisir ses propres identifiants avant le premier démarrage :
 
 ```powershell
 $env:APP_ADMIN_EMAIL = "admin@exemple.tn"
 $env:APP_ADMIN_PASSWORD = "choisir-un-mot-de-passe-long"
 mvn spring-boot:run
+```
+
+### Tests
+
+```bash
+mvn test      # tests unitaires (JUnit 5 + Mockito) et d’intégration (MockMvc, H2 en mémoire)
+mvn verify    # ce que lance la CI GitHub Actions à chaque push
 ```
 
 La base de données H2 est créée dans `data/` et conserve les opérations entre les redémarrages. Elle est incluse pour faciliter une démonstration locale; le modèle relationnel peut ensuite être raccordé à PostgreSQL ou MySQL.
@@ -44,11 +57,19 @@ La base de données H2 est créée dans `data/` et conserve les opérations entr
 
 ```text
 src/main/java/tn/iit/depenses/
-├── config/       sécurité, création du compte admin et catégories initiales
-├── controller/   routes web et formulaires
-├── domain/       Membre, Operation, Revenu, Depense, Categorie
-├── repository/   accès aux données avec Spring Data JPA
-└── service/      règles métier, bilans, rapports et stratégies d’export
+├── config/       sécurité, AdminInitializer, CategoriesParDefautInitializer
+├── controller/   routes web, GestionGlobaleErreurs (@ControllerAdvice), GradientDonut
+├── domain/       Membre, Operation, Revenu, Depense, Categorie, TypeOperation
+├── exception/    exceptions métier (MetierException et ses sous-classes)
+├── repository/   Spring Data JPA + requêtes d’agrégation (SUM / GROUP BY)
+└── service/      règles métier, TableauDeBordFacade, bilans, rapports
+    ├── dto/      OperationRequest, InscriptionRequest, CategorieRequest… (validés par @Valid)
+    └── export/   ExportStrategy, CsvExport, PdfExport, GenerateurPdf
+
+src/test/java/tn/iit/depenses/
+├── service/      tests unitaires des services (Mockito)
+├── controller/   test du graphique en anneau
+└── integration/  sécurité, formulaires, vues, exports, agrégations
 ```
 
 Les vues Thymeleaf et les styles se trouvent dans `src/main/resources/templates/` et `src/main/resources/static/`.
@@ -69,3 +90,25 @@ Les vues Thymeleaf et les styles se trouvent dans `src/main/resources/templates/
 ## Choix de cette version
 
 L’énoncé OOD laisse le choix entre MySQL et PostgreSQL. Cette version utilise H2 en mode fichier afin de pouvoir être lancée localement sans service de base de données distinct. L’affichage utilise le TND et trois décimales, choix adapté au contexte de Sfax. Les exports PDF sont générés par l’application sans bibliothèque externe; les caractères accentués sont translittérés dans le PDF. La base doit être migrée et les paramètres administrateur modifiés avant toute mise en production.
+
+
+## Corrections suite à la revue de code
+
+| Point faible relevé | Correction |
+| --- | --- |
+| Aucun test automatisé | 40+ tests : unitaires (Mockito) et d’intégration (MockMvc + H2), dont l’isolation des données entre membres |
+| `try/catch` dupliqués dans les contrôleurs | Exceptions métier (`exception/`) + `GestionGlobaleErreurs` (`@ControllerAdvice`) |
+| Validation dispersée, « data clumps » (montant, date, description, catégorie) | DTO `OperationRequest`, `InscriptionRequest`, `CategorieRequest` validés par `@Valid` |
+| Mois invalide remplacé en silence, `FormatRapport.valueOf` fragile | Conversion par Spring (`YearMonth`, `FormatRapport`) + message « Paramètre invalide » |
+| Mot de passe admin par défaut `Admin123!` | Uniquement en profil `dev` ; obligatoire via `APP_ADMIN_PASSWORD` sinon ; retiré de la page de connexion |
+| `DataInitializer` avec deux responsabilités | `AdminInitializer` + `CategoriesParDefautInitializer` |
+| `RapportService` couplé à `CsvExport`/`PdfExport` (ternaire) | Registre `Map<FormatRapport, ExportStrategy>` injecté par Spring (OCP, DIP) |
+| `PageController` trop chargé | `TableauDeBordFacade` + `GradientDonut` |
+| `PdfExport` mêlant contenu et format PDF | `PdfExport` (contenu) + `GenerateurPdf` (mécanique PDF) |
+| Chaînes en dur (« Autres », 'REVENU', 'ADMIN', routes) | `TypeOperation` (libellé, signe, catégorie de réaffectation), `Membre.isAdmin()`, `Routes` |
+| `categorie` en EAGER, calculs SUM/GROUP BY en Java | `LAZY` + `@EntityGraph` ; agrégations faites par la base |
+| Unicité des catégories vérifiée seulement en Java | Contrainte unique en base `(membre_id, type_operation, nom)` |
+| Pas d’intégration continue | `.github/workflows/ci.yml` (`mvn verify`) |
+| Bug : supprimer sa catégorie « Autres » cassait la réaffectation | Suppression interdite avec un message clair |
+
+Pistes restantes (long terme) : PostgreSQL + Flyway pour les migrations, Docker, analyse statique (Checkstyle/SpotBugs).

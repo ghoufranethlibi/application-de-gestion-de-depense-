@@ -1,11 +1,15 @@
 package tn.iit.depenses.service;
 
-import tn.iit.depenses.domain.Membre;
-import tn.iit.depenses.domain.Role;
-import tn.iit.depenses.repository.MembreRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tn.iit.depenses.domain.Membre;
+import tn.iit.depenses.domain.Role;
+import tn.iit.depenses.exception.EmailDejaUtiliseException;
+import tn.iit.depenses.repository.MembreRepository;
+import tn.iit.depenses.service.dto.InscriptionRequest;
+
+import java.util.Locale;
 
 @Service
 public class AuthService {
@@ -17,19 +21,18 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /** Crée un compte MEMBRE. Le format des champs est déjà vérifié par @Valid sur InscriptionRequest. */
     @Transactional
-    public Membre inscrire(String nom, String email, String motDePasse) {
-        String nomNettoye = nom == null ? "" : nom.trim();
-        String emailNettoye = email == null ? "" : email.trim().toLowerCase();
-        if (nomNettoye.isBlank() || emailNettoye.isBlank()) {
-            throw new IllegalArgumentException("Le nom et l’adresse e-mail sont obligatoires.");
+    public Membre inscrire(InscriptionRequest demande) {
+        String email = normaliserEmail(demande.email());
+        if (membres.existsByEmailIgnoreCase(email)) {
+            throw new EmailDejaUtiliseException();
         }
-        if (motDePasse == null || motDePasse.length() < 8) {
-            throw new IllegalArgumentException("Le mot de passe doit contenir au moins 8 caractères.");
-        }
-        if (membres.existsByEmailIgnoreCase(emailNettoye)) {
-            throw new IllegalArgumentException("Cette adresse e-mail est déjà utilisée.");
-        }
-        return membres.save(new Membre(nomNettoye, emailNettoye, passwordEncoder.encode(motDePasse), Role.MEMBRE));
+        String motDePasseHache = passwordEncoder.encode(demande.motDePasse());
+        return membres.save(new Membre(demande.nom().trim(), email, motDePasseHache, Role.MEMBRE));
+    }
+
+    private static String normaliserEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

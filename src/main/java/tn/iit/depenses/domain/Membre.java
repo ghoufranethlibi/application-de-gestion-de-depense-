@@ -53,6 +53,7 @@ public class Membre implements UserDetails {
     public String getEmail() { return email; }
     public Role getRole() { return role; }
     public boolean isActif() { return actif; }
+    public boolean isAdmin() { return role == Role.ADMIN; }
     public void setNom(String nom) { this.nom = nom; }
     public void setEmail(String email) { this.email = email; }
     public void setMotDePasseHash(String motDePasseHash) { this.motDePasseHash = motDePasseHash; }

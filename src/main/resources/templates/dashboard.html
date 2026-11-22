@@ -44,7 +44,7 @@
         <div class="donut-layout" th:if="${!repartition.isEmpty()}">
           <div class="donut" role="img" aria-label="Répartition des dépenses" th:style="|background: conic-gradient(${donutStyle});|"><span></span></div>
           <ul class="legend">
-            <li th:each="ligne,stat : ${repartition}"><span class="legend-dot" th:classappend="|legend-color-${stat.index % 6}|"></span>
+            <li th:each="ligne,stat : ${repartition}"><span class="legend-dot" th:style="|background: ${couleursLegende[stat.index % couleursLegende.size()]}|"></span>
               <span class="legend-name" th:text="${ligne.nom}">Catégorie</span>
               <strong th:text="|${#numbers.formatDecimal(ligne.pourcentage, 1, 1)} %|">0 %</strong></li>
           </ul>
@@ -92,17 +92,17 @@
         <table><thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Montant</th><th>Actions</th></tr></thead>
           <tbody><tr th:each="operation : ${operations}">
             <td class="date-cell" th:text="${operation.date}">2026-11-15</td>
-            <td><div class="operation-name"><span class="operation-mark" th:classappend="${operation.type.name() == 'REVENU' ? 'mark-income' : 'mark-expense'}" th:text="${operation.type.name() == 'REVENU' ? '+' : '−'}">+</span>
-              <div><strong th:text="${operation.description != null and !operation.description.isBlank() ? operation.description : (operation.type.name() == 'REVENU' ? 'Revenu' : 'Dépense')}">Dépense</strong><small th:text="${operation.type.name() == 'REVENU' ? 'Revenu' : 'Dépense'}">Dépense</small></div></div></td>
+            <td><div class="operation-name"><span class="operation-mark" th:classappend="${operation.type.revenu ? 'mark-income' : 'mark-expense'}" th:text="${operation.type.signe}">+</span>
+              <div><strong th:text="${operation.description != null and !operation.description.isBlank() ? operation.description : operation.type.libelle}">Dépense</strong><small th:text="${operation.type.libelle}">Dépense</small></div></div></td>
             <td><span class="category-pill" th:text="${operation.categorie != null ? operation.categorie.nom : 'Sans catégorie'}">Alimentation</span></td>
-            <td class="amount-cell" th:classappend="${operation.type.name() == 'REVENU' ? 'text-income' : 'text-expense'}"
-                th:text="|${operation.type.name() == 'REVENU' ? '+' : '−'} ${#numbers.formatDecimal(operation.montant, 1, 3)} TND|">− 0,000 TND</td>
+            <td class="amount-cell" th:classappend="${operation.type.revenu ? 'text-income' : 'text-expense'}"
+                th:text="|${operation.type.signe} ${#numbers.formatDecimal(operation.montant, 1, 3)} TND|">− 0,000 TND</td>
             <td><div class="row-actions"><details class="edit-details"><summary>Modifier</summary>
               <form th:action="@{/operations/{id}/modifier(id=${operation.id})}" method="post" class="edit-form">
                 <label>Montant<input type="number" name="montant" min="0.001" step="0.001" th:value="${operation.montant}" required></label>
                 <label>Date<input type="date" name="date" th:value="${operation.date}" required></label>
-                <label th:if="${operation.type.name() == 'DEPENSE'}">Catégorie<select name="categorieId" required><option th:each="option : ${categoriesDepense}" th:value="${option.id}" th:text="${option.nom}" th:selected="${operation.categorie != null and option.id == operation.categorie.id}"></option></select></label>
-                <label th:if="${operation.type.name() == 'REVENU'}">Catégorie<select name="categorieId"><option value="">Sans catégorie</option><option th:each="option : ${categoriesRevenu}" th:value="${option.id}" th:text="${option.nom}" th:selected="${operation.categorie != null and option.id == operation.categorie.id}"></option></select></label>
+                <label th:if="${!operation.type.revenu}">Catégorie<select name="categorieId" required><option th:each="option : ${categoriesDepense}" th:value="${option.id}" th:text="${option.nom}" th:selected="${operation.categorie != null and option.id == operation.categorie.id}"></option></select></label>
+                <label th:if="${operation.type.revenu}">Catégorie<select name="categorieId"><option value="">Sans catégorie</option><option th:each="option : ${categoriesRevenu}" th:value="${option.id}" th:text="${option.nom}" th:selected="${operation.categorie != null and option.id == operation.categorie.id}"></option></select></label>
                 <label>Description<input type="text" name="description" maxlength="240" th:value="${operation.description}"></label>
                 <button class="button secondary" type="submit">Enregistrer</button>
               </form></details>

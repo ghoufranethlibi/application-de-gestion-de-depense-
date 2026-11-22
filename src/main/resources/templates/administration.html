@@ -13,10 +13,10 @@
       <div class="panel-heading"><div><p class="eyebrow">Accès à l’application</p><h2>Comptes membres</h2></div><span class="count-chip" th:text="|${membres.size()} comptes|">0 comptes</span></div>
       <div class="table-wrap"><table><thead><tr><th>Membre</th><th>Adresse e-mail</th><th>Rôle</th><th>État</th><th>Action</th></tr></thead>
         <tbody><tr th:each="compte : ${membres}"><td><strong th:text="${compte.nom}">Nom</strong></td><td th:text="${compte.email}">email</td>
-          <td><span class="category-pill" th:text="${compte.role.name() == 'ADMIN' ? 'Administrateur' : 'Membre'}">Membre</span></td>
+          <td><span class="category-pill" th:text="${compte.admin ? 'Administrateur' : 'Membre'}">Membre</span></td>
           <td><span class="status-pill" th:classappend="${compte.actif ? 'status-active' : 'status-inactive'}" th:text="${compte.actif ? 'Actif' : 'Désactivé'}">Actif</span></td>
-          <td><form th:if="${compte.role.name() != 'ADMIN'}" th:action="@{/administration/comptes/{id}/etat(id=${compte.id})}" method="post">
-            <button class="button secondary small-button" type="submit" th:text="${compte.actif ? 'Désactiver' : 'Réactiver'}">Désactiver</button></form><span th:if="${compte.role.name() == 'ADMIN'}" class="muted">Protégé</span></td>
+          <td><form th:if="${!compte.admin}" th:action="@{/administration/comptes/{id}/etat(id=${compte.id})}" method="post">
+            <button class="button secondary small-button" type="submit" th:text="${compte.actif ? 'Désactiver' : 'Réactiver'}">Désactiver</button></form><span th:if="${compte.admin}" class="muted">Protégé</span></td>
         </tr></tbody></table></div>
     </section>
     <section class="panel operations-panel admin-categories">
@@ -28,8 +28,8 @@
       </form>
       <div class="category-list">
         <article class="category-row" th:each="categorie : ${categories}">
-          <div class="category-type-icon" th:classappend="${categorie.type.name() == 'DEPENSE' ? 'expense-badge' : 'income-badge'}" th:text="${categorie.type.name() == 'DEPENSE' ? '−' : '+'}">−</div>
-          <div class="category-row-name"><strong th:text="${categorie.nom}">Nom</strong><small th:text="${categorie.type.name() == 'DEPENSE' ? 'Dépense' : 'Revenu'}">Dépense</small></div>
+          <div class="category-type-icon" th:classappend="${categorie.type.revenu ? 'income-badge' : 'expense-badge'}" th:text="${categorie.type.signe}">−</div>
+          <div class="category-row-name"><strong th:text="${categorie.nom}">Nom</strong><small th:text="${categorie.type.libelle}">Dépense</small></div>
           <form th:action="@{/administration/categories/{id}/renommer(id=${categorie.id})}" method="post" class="rename-form">
             <label class="sr-only" th:for="|defaut-${categorie.id}|">Nouveau nom</label><input th:id="|defaut-${categorie.id}|" type="text" name="nom" maxlength="80" th:value="${categorie.nom}" required>
             <button class="button secondary small-button" type="submit">Renommer</button>
