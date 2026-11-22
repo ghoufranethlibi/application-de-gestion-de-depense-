@@ -57,13 +57,9 @@ public class OperationController {
         return executer(redirect, () -> operationService.supprimer(membre, id), "Opération supprimée.");
     }
 
-    private String executer(RedirectAttributes redirect, Action action, String succes) {
-        try {
-            action.execute();
-            redirect.addFlashAttribute("succes", succes);
-        } catch (IllegalArgumentException ex) {
-            redirect.addFlashAttribute("erreur", ex.getMessage());
-        }
+        private String executer(RedirectAttributes redirect, Action action, String succes) {
+        action.execute();
+        redirect.addFlashAttribute("succes", succes);
         return "redirect:/tableau-de-bord";
     }
 
