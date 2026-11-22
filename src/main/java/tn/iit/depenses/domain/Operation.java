@@ -7,12 +7,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Index;
 import jakarta.persistence.Transient;
 
 import java.math.BigDecimal;
@@ -40,7 +40,7 @@ public abstract class Operation {
     @JoinColumn(name = "membre_id", nullable = false)
     private Membre membre;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;
 
@@ -66,5 +66,12 @@ public abstract class Operation {
         this.description = description;
         this.categorie = categorie;
     }
-    @Transient public abstract TypeOperation getType();
+
+    /** Réaffecte l'opération à une autre catégorie (utilisé lors de la suppression d'une catégorie). */
+    public void changerCategorie(Categorie nouvelleCategorie) {
+        this.categorie = nouvelleCategorie;
+    }
+
+    @Transient
+    public abstract TypeOperation getType();
 }

@@ -1,11 +1,12 @@
 package tn.iit.depenses.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import tn.iit.depenses.service.AuthService;
+import tn.iit.depenses.service.dto.InscriptionRequest;
 
 @Controller
 public class AuthController {
@@ -15,21 +16,20 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @GetMapping("/connexion")
+    @GetMapping(Routes.CONNEXION)
     public String connexion() {
         return "connexion";
     }
 
-    @GetMapping("/inscription")
+    @GetMapping(Routes.INSCRIPTION)
     public String inscription() {
         return "inscription";
     }
 
-    @PostMapping("/inscription")
-    public String creerCompte(@RequestParam String nom, @RequestParam String email,
-                              @RequestParam String motDePasse, RedirectAttributes redirect) {
-        authService.inscrire(nom, email, motDePasse);
-        redirect.addFlashAttribute("succes", "Votre compte est créé. Vous pouvez vous connecter.");
-        return "redirect:/connexion";
+    @PostMapping(Routes.INSCRIPTION)
+    public String creerCompte(@Valid InscriptionRequest demande, RedirectAttributes redirect) {
+        authService.inscrire(demande);
+        redirect.addFlashAttribute(MessagesFlash.SUCCES, "Votre compte est créé. Vous pouvez vous connecter.");
+        return Routes.rediriger(Routes.CONNEXION);
     }
 }

@@ -3,7 +3,6 @@ package tn.iit.depenses.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.iit.depenses.domain.Membre;
-import tn.iit.depenses.domain.Role;
 import tn.iit.depenses.exception.ActionInterditeException;
 import tn.iit.depenses.exception.CompteIntrouvableException;
 import tn.iit.depenses.repository.MembreRepository;
@@ -26,7 +25,7 @@ public class AdministrationService {
     @Transactional
     public void inverserEtat(Long id, Membre administrateur) {
         Membre cible = membres.findById(id).orElseThrow(CompteIntrouvableException::new);
-        if (cible.getRole() == Role.ADMIN) {
+        if (cible.isAdmin()) {
             throw new ActionInterditeException("Un compte administrateur ne peut pas être désactivé depuis cet écran.");
         }
         if (cible.getId().equals(administrateur.getId())) {

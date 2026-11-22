@@ -21,8 +21,8 @@
       <div class="panel-heading"><div><p class="eyebrow">Vos créations</p><h2>Catégories personnelles</h2></div><span class="count-chip" th:text="|${categories.size()} catégories|">0 catégories</span></div>
       <div class="category-list" th:if="${!categories.isEmpty()}">
         <article class="category-row" th:each="categorie : ${categories}">
-          <div class="category-type-icon" th:classappend="${categorie.type.name() == 'DEPENSE' ? 'expense-badge' : 'income-badge'}" th:text="${categorie.type.name() == 'DEPENSE' ? '−' : '+'}">−</div>
-          <div class="category-row-name"><strong th:text="${categorie.nom}">Nom</strong><small th:text="${categorie.type.name() == 'DEPENSE' ? 'Dépense' : 'Revenu'}">Dépense</small></div>
+          <div class="category-type-icon" th:classappend="${categorie.type.revenu ? 'income-badge' : 'expense-badge'}" th:text="${categorie.type.signe}">−</div>
+          <div class="category-row-name"><strong th:text="${categorie.nom}">Nom</strong><small th:text="${categorie.type.libelle}">Dépense</small></div>
           <form th:action="@{/categories/{id}/renommer(id=${categorie.id})}" method="post" class="rename-form">
             <label class="sr-only" th:for="|nom-${categorie.id}|">Nouveau nom</label><input th:id="|nom-${categorie.id}|" type="text" name="nom" maxlength="80" th:value="${categorie.nom}" required>
             <button class="button secondary small-button" type="submit">Renommer</button>
