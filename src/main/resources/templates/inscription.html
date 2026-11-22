@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Créer un compte · Mon budget</title><link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="auth-page">
+  <main class="auth-layout">
+    <section class="auth-intro">
+      <a class="brand brand-light" th:href="@{/connexion}"><span class="brand-mark">€</span><span>Mon budget</span></a>
+      <p class="eyebrow">Un départ tout simple</p>
+      <h1>Donnez une place à chaque dépense.</h1>
+      <p class="intro-copy">Votre espace reste privé. Vos opérations et vos bilans ne sont visibles que par vous.</p>
+      <div class="intro-stat"><span class="stat-dot"></span> Inscription gratuite en quelques secondes</div>
+    </section>
+    <section class="auth-card">
+      <p class="eyebrow">Nouveau membre</p><h2>Créer un compte</h2>
+      <p class="muted">Renseignez vos informations pour commencer.</p>
+      <div class="alert error" th:if="${erreur}" th:text="${erreur}"></div>
+      <form th:action="@{/inscription}" method="post" class="form-stack">
+        <label>Nom complet<input type="text" name="nom" autocomplete="name" maxlength="100" required placeholder="Votre nom"></label>
+        <label>Adresse e-mail<input type="email" name="email" autocomplete="email" maxlength="180" required placeholder="vous@exemple.com"></label>
+        <label>Mot de passe<input type="password" name="motDePasse" autocomplete="new-password" minlength="8" required placeholder="8 caractères minimum"></label>
+        <button class="button primary full" type="submit">Créer mon compte <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="auth-foot">Vous avez déjà un compte ? <a th:href="@{/connexion}">Se connecter</a></p>
+    </section>
+  </main>
+</body>
+</html>

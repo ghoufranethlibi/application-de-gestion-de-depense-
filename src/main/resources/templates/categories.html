@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catégories · Mon budget</title><link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="app-page">
+  <div th:replace="~{fragments :: topbar(${estAdmin}, ${membre.nom})}"></div>
+  <main class="page-shell narrow-shell">
+    <div class="alerts"><div class="alert success" th:if="${succes}" th:text="${succes}"></div><div class="alert error" th:if="${erreur}" th:text="${erreur}"></div></div>
+    <section class="page-heading"><div><p class="eyebrow">Classement personnalisé</p><h1>Vos catégories</h1><p class="muted">Les catégories par défaut restent disponibles dans chaque formulaire.</p></div></section>
+    <section class="panel form-panel category-create">
+      <div class="panel-heading"><div><p class="eyebrow">À votre façon</p><h2>Créer une catégorie</h2></div></div>
+      <form th:action="@{/categories}" method="post" class="category-create-form">
+        <label>Nom<input type="text" name="nom" maxlength="80" required placeholder="Ex. Éducation, cadeaux"></label>
+        <label>Type<select name="type" required><option value="DEPENSE">Dépense</option><option value="REVENU">Revenu</option></select></label>
+        <button class="button primary" type="submit">Créer la catégorie</button>
+      </form>
+    </section>
+    <section class="panel operations-panel category-list-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Vos créations</p><h2>Catégories personnelles</h2></div><span class="count-chip" th:text="|${categories.size()} catégories|">0 catégories</span></div>
+      <div class="category-list" th:if="${!categories.isEmpty()}">
+        <article class="category-row" th:each="categorie : ${categories}">
+          <div class="category-type-icon" th:classappend="${categorie.type.name() == 'DEPENSE' ? 'expense-badge' : 'income-badge'}" th:text="${categorie.type.name() == 'DEPENSE' ? '−' : '+'}">−</div>
+          <div class="category-row-name"><strong th:text="${categorie.nom}">Nom</strong><small th:text="${categorie.type.name() == 'DEPENSE' ? 'Dépense' : 'Revenu'}">Dépense</small></div>
+          <form th:action="@{/categories/{id}/renommer(id=${categorie.id})}" method="post" class="rename-form">
+            <label class="sr-only" th:for="|nom-${categorie.id}|">Nouveau nom</label><input th:id="|nom-${categorie.id}|" type="text" name="nom" maxlength="80" th:value="${categorie.nom}" required>
+            <button class="button secondary small-button" type="submit">Renommer</button>
+          </form>
+          <form th:action="@{/categories/{id}/supprimer(id=${categorie.id})}" method="post" onsubmit="return confirm('Supprimer cette catégorie ? Les opérations associées seront réaffectées à Autres.')">
+            <button class="icon-button danger" type="submit" aria-label="Supprimer la catégorie">×</button>
+          </form>
+        </article>
+      </div>
+      <div class="empty-state" th:if="${categories.isEmpty()}"><span class="empty-icon">◇</span><h3>Pas encore de catégorie personnelle</h3><p>Vous pouvez utiliser les catégories proposées ou en créer une ici.</p></div>
+    </section>
+    <footer class="page-footer">La suppression d’une catégorie réaffecte ses opérations vers « Autres ».</footer>
+  </main>
+</body>
+</html>

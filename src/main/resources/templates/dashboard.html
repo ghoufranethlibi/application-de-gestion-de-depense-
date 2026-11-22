@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tableau de bord · Mon budget</title><link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="app-page">
+  <div th:replace="~{fragments :: topbar(${estAdmin}, ${membre.nom})}"></div>
+  <main class="page-shell">
+    <div class="alerts">
+      <div class="alert success" th:if="${succes}" th:text="${succes}"></div>
+      <div class="alert error" th:if="${erreur}" th:text="${erreur}"></div>
+    </div>
+    <section class="page-heading">
+      <div><p class="eyebrow">Votre espace personnel</p><h1>Bonjour, <span th:text="${membre.nom}">Membre</span></h1>
+        <p class="muted">Voici où en sont vos finances pour la période choisie.</p></div>
+      <div class="heading-actions">
+        <form th:action="@{/tableau-de-bord}" method="get" class="month-picker">
+          <label for="mois">Période</label><input id="mois" type="month" name="mois" th:value="${moisSelectionne}">
+          <button class="button secondary" type="submit">Afficher</button>
+        </form>
+        <div class="download-actions">
+          <a class="button ghost" th:href="@{/rapports/CSV(mois=${moisSelectionne})}">Exporter CSV</a>
+          <a class="button ghost" th:href="@{/rapports/PDF(mois=${moisSelectionne})}">Exporter PDF</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="metric-grid" aria-label="Totaux du mois">
+      <article class="metric-card income-card"><div class="metric-label"><span class="metric-icon">↗</span> Revenus</div>
+        <p class="metric-value" th:text="|${#numbers.formatDecimal(bilan.totalRevenus, 1, 3)} TND|">0,000 TND</p>
+        <p class="metric-note">Total enregistré ce mois</p></article>
+      <article class="metric-card expense-card"><div class="metric-label"><span class="metric-icon">↘</span> Dépenses</div>
+        <p class="metric-value" th:text="|${#numbers.formatDecimal(bilan.totalDepenses, 1, 3)} TND|">0,000 TND</p>
+        <p class="metric-note">Total enregistré ce mois</p></article>
+      <article class="metric-card balance-card"><div class="metric-label"><span class="metric-icon">=</span> Solde</div>
+        <p class="metric-value" th:text="|${#numbers.formatDecimal(bilan.solde, 1, 3)} TND|">0,000 TND</p>
+        <p class="metric-note">Revenus moins dépenses</p></article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="panel chart-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Répartition</p><h2>Dépenses par catégorie</h2></div><span class="period-chip" th:text="${bilan.periode}">2026-11</span></div>
+        <div class="donut-layout" th:if="${!repartition.isEmpty()}">
+          <div class="donut" role="img" aria-label="Répartition des dépenses" th:style="|background: conic-gradient(${donutStyle});|"><span></span></div>
+          <ul class="legend">
+            <li th:each="ligne,stat : ${repartition}"><span class="legend-dot" th:classappend="|legend-color-${stat.index % 6}|"></span>
+              <span class="legend-name" th:text="${ligne.nom}">Catégorie</span>
+              <strong th:text="|${#numbers.formatDecimal(ligne.pourcentage, 1, 1)} %|">0 %</strong></li>
+          </ul>
+        </div>
+        <div class="empty-state compact" th:if="${repartition.isEmpty()}"><span class="empty-icon">◌</span><p>Aucune dépense enregistrée pour cette période.</p></div>
+      </article>
+      <article class="panel chart-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Tendance</p><h2>Évolution sur 6 mois</h2></div><div class="chart-key"><span><i class="key-income"></i>Revenus</span><span><i class="key-expense"></i>Dépenses</span></div></div>
+        <div class="bar-chart">
+          <div class="bar-column" th:each="mois : ${evolution}">
+            <div class="bar-pair"><span class="bar income-bar" th:style="|height:${mois.largeurRevenus}%;|" th:title="|Revenus : ${mois.revenus} TND|"></span>
+              <span class="bar expense-bar" th:style="|height:${mois.largeurDepenses}%;|" th:title="|Dépenses : ${mois.depenses} TND|"></span></div>
+            <span class="bar-label" th:text="${mois.libelle}">nov.</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="entry-grid">
+      <article class="panel form-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Nouvelle opération</p><h2>Ajouter un revenu</h2></div><span class="form-badge income-badge">+</span></div>
+        <form th:action="@{/operations/revenu}" method="post" class="entry-form">
+          <label>Montant (TND)<input type="number" name="montant" min="0.001" step="0.001" required placeholder="0,000"></label>
+          <label>Date<input type="date" name="date" th:value="${aujourdhui}" required></label>
+          <label>Catégorie <span class="optional">facultatif</span><select name="categorieId"><option value="">Sans catégorie</option><option th:each="categorie : ${categoriesRevenu}" th:value="${categorie.id}" th:text="${categorie.nom}"></option></select></label>
+          <label>Description<input type="text" name="description" maxlength="240" placeholder="Ex. salaire, remboursement"></label>
+          <button class="button primary" type="submit">Enregistrer le revenu <span aria-hidden="true">→</span></button>
+        </form>
+      </article>
+      <article class="panel form-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Nouvelle opération</p><h2>Ajouter une dépense</h2></div><span class="form-badge expense-badge">−</span></div>
+        <form th:action="@{/operations/depense}" method="post" class="entry-form">
+          <label>Montant (TND)<input type="number" name="montant" min="0.001" step="0.001" required placeholder="0,000"></label>
+          <label>Date<input type="date" name="date" th:value="${aujourdhui}" required></label>
+          <label>Catégorie<select name="categorieId" required><option value="" disabled selected>Choisir une catégorie</option><option th:each="categorie : ${categoriesDepense}" th:value="${categorie.id}" th:text="${categorie.nom}"></option></select></label>
+          <label>Description<input type="text" name="description" maxlength="240" placeholder="Ex. courses, facture"></label>
+          <button class="button primary" type="submit">Enregistrer la dépense <span aria-hidden="true">→</span></button>
+        </form>
+      </article>
+    </section>
+
+    <section class="panel operations-panel">
+      <div class="panel-heading"><div><p class="eyebrow">Votre activité</p><h2>Opérations du mois</h2></div><span class="count-chip" th:text="|${operations.size()} opérations|">0 opérations</span></div>
+      <div class="table-wrap" th:if="${!operations.isEmpty()}">
+        <table><thead><tr><th>Date</th><th>Opération</th><th>Catégorie</th><th>Montant</th><th>Actions</th></tr></thead>
+          <tbody><tr th:each="operation : ${operations}">
+            <td class="date-cell" th:text="${operation.date}">2026-11-15</td>
+            <td><div class="operation-name"><span class="operation-mark" th:classappend="${operation.type.name() == 'REVENU' ? 'mark-income' : 'mark-expense'}" th:text="${operation.type.name() == 'REVENU' ? '+' : '−'}">+</span>
+              <div><strong th:text="${operation.description != null and !operation.description.isBlank() ? operation.description : (operation.type.name() == 'REVENU' ? 'Revenu' : 'Dépense')}">Dépense</strong><small th:text="${operation.type.name() == 'REVENU' ? 'Revenu' : 'Dépense'}">Dépense</small></div></div></td>
+            <td><span class="category-pill" th:text="${operation.categorie != null ? operation.categorie.nom : 'Sans catégorie'}">Alimentation</span></td>
+            <td class="amount-cell" th:classappend="${operation.type.name() == 'REVENU' ? 'text-income' : 'text-expense'}"
+                th:text="|${operation.type.name() == 'REVENU' ? '+' : '−'} ${#numbers.formatDecimal(operation.montant, 1, 3)} TND|">− 0,000 TND</td>
+            <td><div class="row-actions"><details class="edit-details"><summary>Modifier</summary>
+              <form th:action="@{/operations/{id}/modifier(id=${operation.id})}" method="post" class="edit-form">
+                <label>Montant<input type="number" name="montant" min="0.001" step="0.001" th:value="${operation.montant}" required></label>
+                <label>Date<input type="date" name="date" th:value="${operation.date}" required></label>
+                <label th:if="${operation.type.name() == 'DEPENSE'}">Catégorie<select name="categorieId" required><option th:each="option : ${categoriesDepense}" th:value="${option.id}" th:text="${option.nom}" th:selected="${operation.categorie != null and option.id == operation.categorie.id}"></option></select></label>
+                <label th:if="${operation.type.name() == 'REVENU'}">Catégorie<select name="categorieId"><option value="">Sans catégorie</option><option th:each="option : ${categoriesRevenu}" th:value="${option.id}" th:text="${option.nom}" th:selected="${operation.categorie != null and option.id == operation.categorie.id}"></option></select></label>
+                <label>Description<input type="text" name="description" maxlength="240" th:value="${operation.description}"></label>
+                <button class="button secondary" type="submit">Enregistrer</button>
+              </form></details>
+              <form th:action="@{/operations/{id}/supprimer(id=${operation.id})}" method="post" onsubmit="return confirm('Supprimer cette opération ?')"><button class="icon-button danger" type="submit" aria-label="Supprimer">×</button></form>
+            </div></td>
+          </tr></tbody>
+        </table>
+      </div>
+      <div class="empty-state" th:if="${operations.isEmpty()}"><span class="empty-icon">＋</span><h3>Aucune opération pour ce mois</h3><p>Ajoutez votre premier revenu ou votre première dépense ci-dessus.</p></div>
+    </section>
+    <footer class="page-footer">Vos données financières sont privées et séparées par compte.</footer>
+  </main>
+</body>
+</html>

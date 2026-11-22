@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="topbar" th:fragment="topbar(admin, nom)">
+  <a class="brand" th:href="@{/tableau-de-bord}"><span class="brand-mark">€</span><span>Mon budget</span></a>
+  <nav class="top-links">
+    <a th:href="@{/tableau-de-bord}">Tableau de bord</a>
+    <a th:href="@{/categories}">Catégories</a>
+    <a th:if="${admin}" th:href="@{/administration}">Administration</a>
+  </nav>
+  <div class="account-area">
+    <span class="account-name" th:text="${nom}">Membre</span>
+    <form th:action="@{/logout}" method="post"><button class="link-button" type="submit">Déconnexion</button></form>
+  </div>
+</header>
+</body>
+</html>
